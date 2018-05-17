@@ -23,6 +23,10 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import javax.xml.stream.XMLStreamException;
@@ -38,6 +42,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.norconex.committer.core.CommitterException;
@@ -258,10 +263,21 @@ public class JSONFileCommitter implements ICommitter, IXMLConfigurable  {
             }
             JSONObject doc = new JSONObject();
             doc.put("reference", reference);
-            doc.put("metadata", metadata);
-            doc.put("content", 
-                    IOUtils.toString(content, StandardCharsets.UTF_8).trim());
-            
+            doc.put("title", metadata.getString("title",""));
+            String extractedText = IOUtils.toString(content, StandardCharsets.UTF_8).trim() ;
+            String[] textLines = extractedText.split("[\r\n]+");
+
+            ArrayList<String> tabTextLines = new ArrayList<String>();
+            for (String textLine : textLines) {
+                String textLineTrimmed = ""+textLine.trim();
+                if (textLineTrimmed.length()>1) {
+                    tabTextLines.add(textLineTrimmed ) ;
+                    //System.out.println(textLineTrimmed ) ;
+                }
+            }
+
+             doc.put("content", new JSONArray(tabTextLines)) ;
+
             JSONObject docAdd = new JSONObject();
             docAdd.put("doc-add", doc);
             writer.write(docAdd.toString(indent));
@@ -487,5 +503,18 @@ public class JSONFileCommitter implements ICommitter, IXMLConfigurable  {
             writer = null;
             docCount = 0;
         }
+    }
+
+    public static List<String> splitString(String msg, int lineSize) {
+        List<String> res = new ArrayList<String>();
+
+        Pattern p = Pattern.compile("\\b.{1," + (lineSize-1) + "}\\b\\W?");
+        Matcher m = p.matcher(msg);
+
+        while(m.find()) {
+            // System.out.println(m.group().trim());   // Debug
+            res.add(m.group());
+        }
+        return res;
     }
 }
