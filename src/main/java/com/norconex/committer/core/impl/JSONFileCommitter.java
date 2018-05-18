@@ -265,22 +265,51 @@ public class JSONFileCommitter implements ICommitter, IXMLConfigurable  {
             doc.put("reference", reference);
             doc.put("title", metadata.getString("title",""));
             String extractedText = IOUtils.toString(content, StandardCharsets.UTF_8).trim() ;
-            String[] textLines = extractedText.split("[\r\n]+");
+
+
+            String[] previewsA = extractedText.toString().split("\\\\t");
+            //.replaceAll("[\r\n]+", " ");
 
             ArrayList<String> tabTextLines = new ArrayList<String>();
-            for (String textLine : textLines) {
-                String textLineTrimmed = ""+textLine.trim();
-                if (textLineTrimmed.length()>1) {
-                    tabTextLines.add(textLineTrimmed ) ;
-                    //System.out.println(textLineTrimmed ) ;
+            for(int index = 0; index < previewsA.length; ++index) {
+                String preview = previewsA[index];
+                String previewTrimmed = "" + preview.trim();
+                if (previewTrimmed.length() > 1) {
+                    tabTextLines.add(previewTrimmed+" ") ;
                 }
             }
 
-             doc.put("content", new JSONArray(tabTextLines)) ;
+            StringBuilder sb = new StringBuilder();
+            for (String blocktext : tabTextLines) {
+                sb.append(blocktext);
+            }
 
-            JSONObject docAdd = new JSONObject();
-            docAdd.put("doc-add", doc);
-            writer.write(docAdd.toString(indent));
+            String[]  previewB = sb.toString().split("[\r\n\t]+");
+
+            ArrayList<String> tabTextLinesB = new ArrayList<String>();
+            for(int indexB = 0; indexB < previewB.length; ++indexB) {
+                String block = previewB[indexB];
+                String previewTrimmedB = "" + block.trim();
+                if (previewTrimmedB.length() > 1) {
+                    tabTextLinesB.add(previewTrimmedB+" ") ;
+                }
+            }
+
+
+            StringBuilder sbB = new StringBuilder();
+            for (String blocktextB : tabTextLinesB) {
+                sbB.append(blocktextB);
+            }
+
+            String  previewC = sbB.toString();
+
+            doc.put("content",previewC);
+
+            //JSONObject docAdd = new JSONObject();
+            //docAdd.put("doc-add t", doc);
+            writer.write(doc.toString(indent));
+
+
         } catch (IOException e) {
             mainJSON.close();
             throw new CommitterException("Cannot write to JSON file: " 
